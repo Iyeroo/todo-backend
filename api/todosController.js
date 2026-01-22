@@ -1,6 +1,9 @@
 import prisma from '../prisma/client.js';
 
 export default async function handler(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*'); // allow all origins
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   const { method } = req;
 
   try {
