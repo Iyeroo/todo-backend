@@ -1,11 +1,12 @@
 import prisma from '../prisma/client.js';
 
 export default async function handler(req, res) {
+    
   // 1️⃣ Set CORS headers for all requests
-  res.setHeader('Access-Control-Allow-Origin', '*'); // change '*' to your frontend URL in production
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'); // change '*' to your frontend URL in production
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+res.status(200).json({ status: 'API running 🚀' });
   // 2️⃣ Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
