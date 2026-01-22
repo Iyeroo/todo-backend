@@ -7,7 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Todo {
+model todo {
   id           String   @id @default(cuid())
   title        String
   is_completed Boolean  @default(false)
