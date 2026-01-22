@@ -1,67 +1,90 @@
-// import prisma from '../prisma/client.js';
+const express = require("express");
+const cors = require("cors");
+const { PrismaClient } = require("@prisma/client");
 
-export default async function handler(req, res) {
+const prisma = new PrismaClient();
+const app = express();
 
-  // ✅ 1. Always set CORS headers FIRST
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+/* -------------------- MIDDLEWARE -------------------- */
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
 
-  // ✅ 2. Handle preflight IMMEDIATELY
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+app.use(express.json());
 
+/* -------------------- OPTIONS (CORS PREFLIGHT) -------------------- */
+app.options("*", (req, res) => {
+  res.status(204).end();
+});
+
+/* -------------------- ROUTES -------------------- */
+
+// GET all todos
+app.get("/", async (req, res) => {
   try {
-    const { method, query } = req;
-    let body = req.body;
-
-    if (typeof body === 'string') {
-      body = JSON.parse(body);
-    }
-
-    // GET
-    if (method === 'GET') {
-      const todos = await prisma.todo.findMany();
-      return res.status(200).json(todos);
-    }
-
-    // POST
-    if (method === 'POST') {
-      const todo = await prisma.todo.create({ data: body });
-      return res.status(201).json(todo);
-    }
-
-    // PUT
-    if (method === 'PUT') {
-      const id = query.id || body.id;
-      if (!id) return res.status(400).json({ error: 'Todo ID is required' });
-
-      const { id: _ignore, ...updateData } = body;
-
-      const updatedTodo = await prisma.todo.update({
-        where: { id: Number(id) },
-        data: updateData,
-      });
-
-      return res.status(200).json(updatedTodo);
-    }
-
-    // DELETE
-    if (method === 'DELETE') {
-      const id = query.id || body.id;
-      if (!id) return res.status(400).json({ error: 'Todo ID is required' });
-
-      await prisma.todo.delete({ where: { id: Number(id) } });
-      return res.status(200).json({ message: 'Todo deleted successfully' });
-    }
-
-    // Unsupported method
-    res.setHeader('Allow', ['GET','POST','PUT','DELETE','OPTIONS']);
-    return res.status(405).end();
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
+    const todos = await prisma.todo.findMany();
+    res.status(200).json(todos);
+  } catch (error) {
+    console.error("GET error:", error);
+    res.status(500).json({ error: "Failed to fetch todos" });
   }
-}
+});
+
+// CREATE todo
+app.post("/", async (req, res) => {
+  try {
+    const { title } = req.body;
+
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    const todo = await prisma.todo.create({
+      data: { title }
+    });
+
+    res.status(201).json(todo);
+  } catch (error) {
+    console.error("POST error:", error);
+    res.status(500).json({ error: "Failed to create todo" });
+  }
+});
+
+// UPDATE todo
+app.patch("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { completed } = req.body;
+
+    const updatedTodo = await prisma.todo.update({
+      where: { id },
+      data: { completed }
+    });
+
+    res.status(200).json(updatedTodo);
+  } catch (error) {
+    console.error("PATCH error:", error);
+    res.status(500).json({ error: "Failed to update todo" });
+  }
+});
+
+// DELETE todo
+app.delete("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    await prisma.todo.delete({
+      where: { id }
+    });
+
+    res.status(204).end();
+  } catch (error) {
+    console.error("DELETE error:", error);
+    res.status(500).json({ error: "Failed to delete todo" });
+  }
+});
+
+/* -------------------- EXPORT (CRITICAL) -------------------- */
+module.exports = app;
