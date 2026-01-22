@@ -8,6 +8,9 @@ export default async function handler(req, res) {
 
   try {
     // GET all todos
+      if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
     if (method === 'GET') {
       const todos = await prisma.todo.findMany();
       return res.status(200).json(todos);
