@@ -1,4 +1,4 @@
-import prisma from '../prisma/client.js';
+// import prisma from '../prisma/client.js';
 
 export default async function handler(req, res) {
 
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   // ✅ 2. Handle preflight IMMEDIATELY
   if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+    return res.status(200).end();
   }
 
   try {
