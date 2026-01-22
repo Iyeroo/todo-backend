@@ -1,39 +1,38 @@
 import prisma from '../prisma/client.js';
 
 export default async function handler(req, res) {
-    
-  // 1️⃣ Set CORS headers for all requests
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000'); // change '*' to your frontend URL in production
+
+  // ✅ 1. Always set CORS headers FIRST
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-res.status(200).json({ status: 'API running 🚀' });
-  // 2️⃣ Handle preflight
+
+  // ✅ 2. Handle preflight IMMEDIATELY
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(204).end();
   }
 
   try {
     const { method, query } = req;
     let body = req.body;
 
-    // If body is string (sometimes happens in serverless), parse it
     if (typeof body === 'string') {
       body = JSON.parse(body);
     }
 
-    // GET all todos
+    // GET
     if (method === 'GET') {
       const todos = await prisma.todo.findMany();
       return res.status(200).json(todos);
     }
 
-    // POST create new todo
+    // POST
     if (method === 'POST') {
       const todo = await prisma.todo.create({ data: body });
       return res.status(201).json(todo);
     }
 
-    // PUT update existing todo using query param id
+    // PUT
     if (method === 'PUT') {
       const id = query.id || body.id;
       if (!id) return res.status(400).json({ error: 'Todo ID is required' });
@@ -44,10 +43,11 @@ res.status(200).json({ status: 'API running 🚀' });
         where: { id: Number(id) },
         data: updateData,
       });
+
       return res.status(200).json(updatedTodo);
     }
 
-    // DELETE a todo using query param id
+    // DELETE
     if (method === 'DELETE') {
       const id = query.id || body.id;
       if (!id) return res.status(400).json({ error: 'Todo ID is required' });
@@ -58,7 +58,8 @@ res.status(200).json({ status: 'API running 🚀' });
 
     // Unsupported method
     res.setHeader('Allow', ['GET','POST','PUT','DELETE','OPTIONS']);
-    return res.status(405).json({ error: `Method ${method} Not Allowed` });
+    return res.status(405).end();
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
